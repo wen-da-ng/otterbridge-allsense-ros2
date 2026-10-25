@@ -15,17 +15,17 @@ jobs:
     container: ros:${{ matrix.distro }}
     steps:
       - run: apt-get update -qq && apt-get install -y -qq git
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: repo
       # The Python client and the test kit (fake phone). Until both are on PyPI they come from their repos;
       # while those are private, add a read-only TESTKIT_TOKEN secret that can read both.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: wen-da-ng/otterbridge-allsense-python
           token: ${{ secrets.TESTKIT_TOKEN || github.token }}
           path: python
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: wen-da-ng/otterbridge-allsense-protocol
           token: ${{ secrets.TESTKIT_TOKEN || github.token }}
