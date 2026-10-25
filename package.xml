@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>allsense_ros2</name>
+  <version>0.1.0</version>
+  <description>Publishes sensors from an Android phone running OtterBridge AllSense as standard ROS 2 messages.</description>
+  <maintainer email="noreply@github.com">wen-da-ng</maintainer>
+  <license>MIT</license>
+  <url type="repository">https://github.com/wen-da-ng/otterbridge-allsense</url>
+
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <!-- Optional at run time (the bridge falls back without them): H.264 video and microphone audio. -->
+  <exec_depend>foxglove_msgs</exec_depend>
+  <exec_depend>audio_common_msgs</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <!-- Also needs the "allsense" Python package (otterbridge-allsense-python): pip install it into the ROS Python. -->
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,31 @@
+allsense_bridge:
+  ros__parameters:
+    # Stream names as set in the app (Rename). Empty: every Basic stream with a ROS message type.
+    streams: [""]
+    # Rate for continuous sensors, Hz. Event sensors (light, proximity…) send every change.
+    rate_hz: 50.0
+    # Frame of all messages. Empty: "<device>_sensors". Add a static transform for the phone's mount.
+    frame_id: ""
+    # Frame of /allsense/<device>/robot/* (the phone's mount set in the app) and of /imu when those exist.
+    robot_frame_id: "base_link"
+    # Combined sensor_msgs/Imu on /allsense/<device>/imu (accelerometer + gyroscope + orientation).
+    imu: true
+    # Orientation for the combined IMU: "game" (no compass; robust near motors, yaw drifts slowly)
+    # or "absolute" (compass; heading from north, disturbed by magnets and steel).
+    imu_orientation: "game"
+    # Stamp messages with the sensor's own (clock-synced) time instead of the arrival time.
+    use_phone_time: true
+    # Sensor data QoS is best effort; set true for RELIABLE subscribers.
+    reliable: false
+    # Cameras to publish (names from the app), e.g. ["back"]. Empty: none.
+    cameras: [""]
+    camera_size: "640x480"
+    camera_fps: 15
+    # "jpeg": sensor_msgs/CompressedImage on …/camera/<name>/image/compressed.
+    # "h264": foxglove_msgs/CompressedVideo on …/camera/<name>/video (far less bandwidth; Foxglove plays it).
+    camera_codec: "jpeg"
+    # H.264 bits/s; 0: the phone's default (1 000 000).
+    camera_bitrate: 0
+    # Microphones to publish, e.g. ["mic"]: audio_common_msgs on …/mic/<name>/audio, audio_stamped, audio_info.
+    microphones: [""]
+    mic_rate: 16000
