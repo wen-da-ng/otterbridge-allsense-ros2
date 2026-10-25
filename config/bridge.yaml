@@ -1,5 +1,9 @@
 allsense_bridge:
   ros__parameters:
+    # The phone's address, url: "http://<phone>:8765/", is set on the command line. Its pairing token
+    # goes in $ALLSENSE_TOKEN or in a file named here, never in a parameter: anyone on the ROS network
+    # can read parameters (ros2 param get). A token in url still works but is removed from it, with a warning.
+    token_file: ""
     # Stream names as set in the app (Rename). Empty: every Basic stream with a ROS message type.
     streams: [""]
     # Rate for continuous sensors, Hz. Event sensors (light, proximity…) send every change.

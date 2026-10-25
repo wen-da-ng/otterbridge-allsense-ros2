@@ -34,7 +34,7 @@ python3 -m pytest -q -p no:cacheprovider src/allsense_ros2/test
 echo "== bridge against the fake phone"
 allsense-fake-phone --port "$PORT" &
 sleep 1
-ros2 run allsense_ros2 bridge --ros-args -p url:="http://127.0.0.1:$PORT/?token=testtoken" -p rate_hz:=50.0 \
+ALLSENSE_TOKEN=testtoken ros2 run allsense_ros2 bridge --ros-args -p url:="http://127.0.0.1:$PORT/" -p rate_hz:=50.0 \
   -p "cameras:=['back']" -p camera_codec:=h264 -p "microphones:=['mic']" &
 sleep 5
 echo "-- topics"
@@ -43,6 +43,13 @@ for t in imu sensors/magnetic_field sensors/pressure sensors/proximity sensors/a
   echo "-- /allsense/rover/$t"
   timeout 10 ros2 topic echo --no-daemon --once --qos-reliability best_effort "/allsense/rover/$t" | head -40 || true
 done
+echo "-- check: a token in url is removed from the parameter"
+ros2 run allsense_ros2 bridge --ros-args -r __node:=allsense_bridge_url -p url:="http://127.0.0.1:$PORT/?token=testtoken" -p imu:=false \
+  -p "streams:=['light']" &
+sleep 4
+ros2 param get --no-daemon /allsense_bridge_url url | tee /tmp/url.txt
+kill %3 2>/dev/null || true
+grep -q "127.0.0.1" /tmp/url.txt && ! grep -q testtoken /tmp/url.txt || { echo "FAIL: the token is still in the url parameter"; exit 1; }
 echo "-- check: IMU data with the fake phone's gravity"
 timeout 10 ros2 topic echo --no-daemon --once --qos-reliability best_effort /allsense/rover/imu > /tmp/imu.txt || true
 kill %1 %2 2>/dev/null || true

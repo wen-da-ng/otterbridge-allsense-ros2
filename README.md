@@ -17,13 +17,18 @@ cd ~/ros2_ws && colcon build --packages-select allsense_ros2 && source install/s
 
 ## Run
 
-In the app, tap **Start streaming** (Home) and copy the link from **Connect → ROS 2**:
+In the app, tap **Start streaming** (Home) and copy the link from **Connect → ROS 2**. Give the bridge the address, and the token (after `?token=`) in `ALLSENSE_TOKEN`:
 
 ```bash
-ros2 run allsense_ros2 bridge --ros-args -p url:="http://192.168.1.20:8765/?token=abcd"
+export ALLSENSE_TOKEN=abcd
+ros2 run allsense_ros2 bridge --ros-args -p url:="http://192.168.1.20:8765/"
 # or, with the parameter file:
-ros2 launch allsense_ros2 bridge.launch.py url:="http://192.168.1.20:8765/?token=abcd"
+ros2 launch allsense_ros2 bridge.launch.py url:="http://192.168.1.20:8765/"
+# or keep the token in a file (e.g. readable only by you: chmod 600):
+ros2 launch allsense_ros2 bridge.launch.py url:="http://192.168.1.20:8765/" token_file:=~/.allsense_token
 ```
+
+Why not the whole link? ROS parameters can be read by anyone on the same ROS network (`ros2 param get /allsense_bridge url`). The full link still works, but the bridge then removes the token from the `url` parameter and warns.
 
 ## Topics
 
@@ -73,7 +78,8 @@ See [`config/bridge.yaml`](config/bridge.yaml).
 
 | Parameter | Default | |
 |---|---|---|
-| `url` | (required) | Link from the app; contains the token |
+| `url` | (required) | The phone's address from the app's link, e.g. `http://192.168.1.20:8765/` |
+| `token_file` | none | File holding the pairing token; otherwise `$ALLSENSE_TOKEN` (a token in `url` or `token` works but is removed from the parameter, with a warning) |
 | `streams` | Basic streams with a ROS message type | Names to publish |
 | `rate_hz` | 50 | Continuous sensors; event sensors send every change |
 | `frame_id` | `<device>_sensors` | |

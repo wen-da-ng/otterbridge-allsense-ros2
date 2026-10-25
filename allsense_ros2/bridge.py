@@ -1,6 +1,10 @@
 """ROS 2 node: connects to an AllSense phone and publishes its sensors as standard messages.
 
-    ros2 run allsense_ros2 bridge --ros-args -p url:="http://192.168.1.20:8765/?token=abcd"
+    ALLSENSE_TOKEN=abcd ros2 run allsense_ros2 bridge --ros-args -p url:="http://192.168.1.20:8765/"
+
+The token comes from $ALLSENSE_TOKEN or the file named by token_file, not from a parameter: anyone
+on the DDS domain can read parameters (ros2 param get). A token left in url still works; the
+bridge then removes it from the parameter and warns.
 
 Topics: /allsense/<device>/sensors/<name> (the names set in the app), plus a combined
 /allsense/<device>/imu (accelerometer + gyroscope + orientation) unless imu:=false. If the phone's
@@ -24,11 +28,12 @@ from typing import Dict, List
 
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from sensor_msgs.msg import CompressedImage, Imu
 from std_msgs.msg import UInt8MultiArray
 
-from . import convert
+from . import convert, link
 
 try:
     import allsense
@@ -43,7 +48,19 @@ class Bridge(Node):
     def __init__(self) -> None:
         super().__init__("allsense_bridge")
         url = self.declare_parameter("url", "").value
-        token = self.declare_parameter("token", "").value or None
+        token_param = self.declare_parameter("token", "").value
+        token_file = self.declare_parameter("token_file", "").value
+        try:
+            phone_link = link.resolve(url, token_param, token_file)
+        except ValueError as e:
+            raise SystemExit(f"allsense_bridge: {e}") from None
+        if phone_link.exposed:
+            # Parameters are readable by anyone on the DDS domain: keep only the address there.
+            self.set_parameters([Parameter("url", Parameter.Type.STRING, phone_link.url),
+                                 Parameter("token", Parameter.Type.STRING, "")])
+            self.get_logger().warn(f"The pairing token was in a ROS parameter (url or token), which anyone on this ROS "
+                                   f"network can read; it's now removed from it. Pass it as ${link.TOKEN_ENV} or in a "
+                                   "file named by token_file instead.")
         names: List[str] = list(self.declare_parameter("streams", [""]).value or [])
         names = [n for n in names if n]
         self.rate = float(self.declare_parameter("rate_hz", 50.0).value)
@@ -65,9 +82,13 @@ class Bridge(Node):
         self.mic_rate = int(self.declare_parameter("mic_rate", 16000).value)
 
         if not url:
-            raise SystemExit("Set the phone link: --ros-args -p url:=\"http://<phone>:8765/?token=…\" (from the app: Home → Connect → ROS 2)")
+            raise SystemExit("Set the phone's address: --ros-args -p url:=\"http://<phone>:8765/\" and the token in "
+                             f"${link.TOKEN_ENV} or token_file (from the app: Home → Connect → ROS 2)")
+        if not phone_link.token:
+            raise SystemExit(f"No pairing token: set ${link.TOKEN_ENV}, or token_file to a file holding it "
+                             "(the token is in the link from the app: Home → Connect → ROS 2)")
 
-        self.phone = allsense.connect(url, token, name=self.get_name())
+        self.phone = allsense.connect(phone_link.url, phone_link.token, name=self.get_name())
         device = self.phone.device
         self.frame_id = frame or f"{device}_sensors"
         self.qos = QoSProfile(depth=10, reliability=ReliabilityPolicy.RELIABLE) if reliable else qos_profile_sensor_data
